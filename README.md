@@ -18,6 +18,7 @@ The objective is to find:
 2. The optimal policy $pi^*(s)$
 
 ---
+
 ## Software Requirements
 
 ```bash
@@ -33,6 +34,7 @@ The experiment uses the Gymnasium `FrozenLake-v1` environment.
 FrozenLake is a grid-world environment where the agent moves over frozen tiles and tries to reach the goal without falling into holes.
 
 For the default 4 × 4 FrozenLake map:
+
 | Component | Description |
 |---|---|
 | Environment | `FrozenLake-v1` |
@@ -55,6 +57,7 @@ It consists of two major steps:
 2. **Policy Improvement**
 
 These two steps are repeated until the policy becomes stable.
+
 ---
 
 ## Policy Evaluation
@@ -103,6 +106,7 @@ R(s,a,s') + \gamma V^\pi(s')
 $$
 
 If the improved policy is the same as the old policy, the policy is considered stable.
+
 ---
 
 ## Algorithm
@@ -151,6 +155,60 @@ def policy_evaluation(policy):
 ```
 ```
 # --------------------------------------------------
+# Policy Improvement
+# --------------------------------------------------
+
+def policy_improvement(V):
+    policy = np.zeros((n_states, n_actions))
+
+    for s in range(n_states):
+        action_values = np.zeros(n_actions)
+
+        for a in range(n_actions):
+            for prob, next_state, reward, terminated in env.P[s][a]:
+                action_values[a] += prob * (
+                    reward + gamma * V[next_state] * (not terminated)
+                )
+
+        best_action = np.argmax(action_values)
+        policy[s, best_action] = 1.0
+
+    return policy
+```
+```
+# --------------------------------------------------
+# Policy Iteration
+# --------------------------------------------------
+
+def policy_iteration(env, gamma=0.99, theta=1e-8):
+
+    n_states = env.observation_space.n
+    n_actions = env.action_space.n
+
+    # Start with a random/equal policy
+    policy = np.ones((n_states, n_actions)) / n_actions
+
+    while True:
+
+        # -------------------------------
+        # Policy Evaluation
+        # -------------------------------
+        V = np.zeros(n_states)
+
+        while True:
+            delta = 0
+
+            for s in range(n_states):
+
+                v = V[s]
+                new_v = 0
+
+                for a in range(n_actions):
+
+                    action_prob = policy[s][a]
+
+                    for prob, next_state, reward, terminated in env.P[s][a]:
+
                         new_v += action_prob * prob * (
                             reward + gamma * V[next_state] * (not terminated)
                         )
@@ -198,7 +256,8 @@ def policy_evaluation(policy):
 ```
 
 ## Output
-
+<img width="821" height="342" alt="image" src="https://github.com/user-attachments/assets/a499748e-0c16-44db-8530-3f79802ec089" />
+<img width="873" height="190" alt="image" src="https://github.com/user-attachments/assets/29868d30-fa50-4034-a9df-d87ea70efe34" />
 
 ---
 
@@ -209,8 +268,4 @@ Thus, the Policy Iteration algorithm was successfully implemented on the FrozenL
 
 ## Inference
 Policy Iteration efficiently solves a finite Markov Decision Process by alternating between evaluating the current policy and greedily improving it. Once the policy becomes stable, it represents the optimal policy for the given FrozenLake environment.
-
-
-
-
 
