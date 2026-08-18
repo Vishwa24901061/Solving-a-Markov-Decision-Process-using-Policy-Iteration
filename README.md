@@ -18,7 +18,6 @@ The objective is to find:
 2. The optimal policy $pi^*(s)$
 
 ---
-
 ## Software Requirements
 
 ```bash
@@ -34,7 +33,6 @@ The experiment uses the Gymnasium `FrozenLake-v1` environment.
 FrozenLake is a grid-world environment where the agent moves over frozen tiles and tries to reach the goal without falling into holes.
 
 For the default 4 × 4 FrozenLake map:
-
 | Component | Description |
 |---|---|
 | Environment | `FrozenLake-v1` |
@@ -57,7 +55,6 @@ It consists of two major steps:
 2. **Policy Improvement**
 
 These two steps are repeated until the policy becomes stable.
-
 ---
 
 ## Policy Evaluation
@@ -106,7 +103,6 @@ R(s,a,s') + \gamma V^\pi(s')
 $$
 
 If the improved policy is the same as the old policy, the policy is considered stable.
-
 ---
 
 ## Algorithm
@@ -124,57 +120,97 @@ If the improved policy is the same as the old policy, the policy is considered s
 
 ## Python Program
 
-```python
-
-# -------------------------------------------------
+```
+# --------------------------------------------------
 # Policy Evaluation
-# -------------------------------------------------
+# --------------------------------------------------
 
+def policy_evaluation(policy):
+    V = np.zeros(n_states)
 
+    while True:
+        delta = 0
 
-# -------------------------------------------------
-# Policy Improvement
-# -------------------------------------------------
+        for s in range(n_states):
+            v = V[s]
+            new_v = 0
 
-#-------------------------------------------------
-# Policy Iteration
-# -------------------------------------------------
+            for a, action_prob in enumerate(policy[s]):
+                for prob, next_state, reward, terminated in env.P[s][a]:
+                    new_v += action_prob * prob * (
+                        reward + gamma * V[next_state] * (not terminated)
+                    )
 
+            V[s] = new_v
+            delta = max(delta, abs(v - V[s]))
 
+        if delta < theta:
+            break
 
+    return V
+```
+```
+# --------------------------------------------------
+                        new_v += action_prob * prob * (
+                            reward + gamma * V[next_state] * (not terminated)
+                        )
 
+                V[s] = new_v
+
+                delta = max(delta, abs(v - V[s]))
+
+            if delta < theta:
+                break
+
+        # -------------------------------
+        # Policy Improvement
+        # -------------------------------
+        policy_stable = True
+
+        for s in range(n_states):
+
+            old_action = np.argmax(policy[s])
+
+            action_values = np.zeros(n_actions)
+
+            for a in range(n_actions):
+
+                for prob, next_state, reward, terminated in env.P[s][a]:
+
+                    action_values[a] += prob * (
+                        reward + gamma * V[next_state] * (not terminated)
+                    )
+
+            best_action = np.argmax(action_values)
+
+            # Update policy
+            policy[s] = 0
+            policy[s][best_action] = 1
+
+            if old_action != best_action:
+                policy_stable = False
+
+        # If policy doesn't change, we're done
+        if policy_stable:
+            break
+
+    return policy, V
 ```
 
 ## Output
-
-```text
-
-Total policy iterations: 
-
-Optimal State-Value Function:
-
-
-Optimal Policy:
-
-```
-
 
 
 ---
 
 ## Result
 
-```text
+Thus, the Policy Iteration algorithm was successfully implemented on the FrozenLake-v1 environment. The algorithm repeatedly performed policy evaluation and policy improvement until the policy became stable, obtaining the optimal state-value function and optimal policy.
 
-
-
-```
----
 
 ## Inference
-```text
+Policy Iteration efficiently solves a finite Markov Decision Process by alternating between evaluating the current policy and greedily improving it. Once the policy becomes stable, it represents the optimal policy for the given FrozenLake environment.
 
 
-```
----
+
+
 
